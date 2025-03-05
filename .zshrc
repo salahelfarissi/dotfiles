@@ -83,3 +83,8 @@ export NVM_DIR="$HOME/.nvm"
 # Shell integrations
 source <(fzf --zsh)
 eval "$(zoxide init --cmd cd zsh)"
+. "/Users/salah/.deno/env"
+
+# Poetry tab completion
+fpath+=~/.zfunc
+autoload -Uz compinit && compinit
