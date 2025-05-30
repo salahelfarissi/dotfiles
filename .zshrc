@@ -69,7 +69,6 @@ alias ls='ls --color'
 alias vim='nvim'
 alias c='clear'
 
-
 # psql util
 export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 
@@ -88,3 +87,9 @@ eval "$(zoxide init --cmd cd zsh)"
 # Poetry tab completion
 fpath+=~/.zfunc
 autoload -Uz compinit && compinit
+
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=(/Users/salah/.docker/completions $fpath)
+autoload -Uz compinit
+compinit
+# End of Docker CLI completions
