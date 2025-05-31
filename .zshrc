@@ -93,3 +93,6 @@ fpath=(/Users/salah/.docker/completions $fpath)
 autoload -Uz compinit
 compinit
 # End of Docker CLI completions
+
+# Enable uv shell completions
+eval "$(uv generate-shell-completion zsh)"
