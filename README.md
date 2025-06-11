@@ -9,8 +9,28 @@ Ensure you have the following installed on your system.
 - Git
 - Stow
 
-## Installation
+```shell
+sudo apt update
+sudo apt install stow
+```
+
+Backup `.zshrc` file.
 
 ```shell
-$ stow --adopt .
+mv .zshrc .zshrc.bak
+```
+
+## Installation
+
+Clone this repository into $HOME directory.
+
+```shell
+cd ~/dotfiles/
+stow --adopt .
+```
+
+Verfiy that `~/.zshrc` is a symlink to `~/dotfiles/.zshrc`.
+
+```shell
+ls -lha ~/.zshrc
 ```
