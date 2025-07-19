@@ -96,3 +96,8 @@ compinit
 
 # Enable uv shell completions
 eval "$(uv generate-shell-completion zsh)"
+
+# NVim
+export PATH="/usr/local/nvim/bin:$PATH"
+
+export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
