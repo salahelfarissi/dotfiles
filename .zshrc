@@ -84,9 +84,10 @@ source <(fzf --zsh)
 eval "$(zoxide init --cmd cd zsh)"
 . "/Users/salah/.deno/env"
 
-# Poetry tab completion
-fpath+=~/.zfunc
-autoload -Uz compinit && compinit
+# Minikube completions
+if command -v minikube &>/dev/null; then
+  source <(minikube completion zsh)
+fi
 
 # The following lines have been added by Docker Desktop to enable Docker CLI completions.
 fpath=(/Users/salah/.docker/completions $fpath)
@@ -101,3 +102,8 @@ eval "$(uv generate-shell-completion zsh)"
 export PATH="/usr/local/nvim/bin:$PATH"
 
 export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
+
+autoload -U +X bashcompinit && bashcompinit
+complete -o nospace -C /opt/homebrew/bin/mc mc
+
+zinit load ohmyzsh/ohmyzsh
