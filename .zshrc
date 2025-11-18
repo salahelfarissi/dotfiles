@@ -103,7 +103,12 @@ export PATH="/usr/local/nvim/bin:$PATH"
 
 export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
 
+# Krew
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+
 autoload -U +X bashcompinit && bashcompinit
 complete -o nospace -C /opt/homebrew/bin/mc mc
 
-zinit load ohmyzsh/ohmyzsh
+fpath=(~/.zsh/completion $fpath)
+autoload -U compinit
+compinit
