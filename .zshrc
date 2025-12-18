@@ -30,6 +30,8 @@ zinit light Aloxaf/fzf-tab
 
 # Add in snippets
 zinit snippet OMZP::git
+zinit snippet OMZP::kubectl
+zinit snippet OMZP::kubectx
 
 # Load completions
 autoload -Uz compinit && compinit
