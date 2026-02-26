@@ -70,6 +70,8 @@ zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 alias ls='ls --color'
 alias vim='nvim'
 alias c='clear'
+alias copy-last='fc -ln -1 | sed "s/^[[:space:]]*//" | pbcopy'
+alias gchanged='git diff --name-only $(git_main_branch)...'
 
 # psql util
 export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
