@@ -32,6 +32,14 @@ zinit light Aloxaf/fzf-tab
 zinit snippet OMZP::git
 zinit snippet OMZP::kubectl
 zinit snippet OMZP::kubectx
+zinit snippet OMZP::sudo
+zinit snippet OMZP::docker
+zinit snippet OMZP::docker-compose
+zinit snippet OMZP::aliases
+zinit snippet OMZP::common-aliases
+zinit snippet OMZP::alias-finder
+
+zstyle ':omz:plugins:alias-finder' autoload yes # disabled by default
 
 # Load completions
 autoload -Uz compinit && compinit
