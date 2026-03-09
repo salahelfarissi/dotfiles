@@ -32,6 +32,13 @@ zinit light Aloxaf/fzf-tab
 zinit snippet OMZP::git
 zinit snippet OMZP::kubectl
 zinit snippet OMZP::kubectx
+zinit snippet OMZP::sudo
+zinit snippet OMZP::docker
+zinit snippet OMZP::docker-compose
+zinit snippet OMZP::common-aliases
+zinit snippet OMZP::alias-finder
+
+zstyle ':omz:plugins:alias-finder' autoload yes # disabled by default
 
 # Load completions
 autoload -Uz compinit && compinit
@@ -72,6 +79,8 @@ alias vim='nvim'
 alias c='clear'
 alias copy-last='fc -ln -1 | sed "s/^[[:space:]]*//" | pbcopy'
 alias gchanged='git diff --name-only $(git_main_branch)...'
+alias lg='lazygit'
+alias gmr='glab mr create -a s.el-farissi'
 
 # psql util
 export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
