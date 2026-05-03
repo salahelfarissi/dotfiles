@@ -8,6 +8,7 @@ Ensure you have the following installed on your system.
 
 - Git
 - Stow
+- Neovim (v0.12.2)
 
 ```shell
 sudo apt update
