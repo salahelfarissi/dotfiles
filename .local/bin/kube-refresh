@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# kube-refresh — merge ~/.kube/{dev,staging,prod}/*.yaml into ~/.kube/config
+set -euo pipefail
+
+KUBE_DIR="${HOME}/.kube"
+CONFIG="${KUBE_DIR}/config"
+BACKUP="${KUBE_DIR}/config-bkp"
+TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+
+DRY_RUN=false
+[[ "${1:-}" == "--dry-run" ]] && DRY_RUN=true
+
+yaml_files=()
+while IFS= read -r -d '' f; do
+    [[ "$f" == *:* ]] && continue
+    yaml_files+=("$f")
+done < <(find "${KUBE_DIR}/dev" "${KUBE_DIR}/staging" "${KUBE_DIR}/prod" \
+             -maxdepth 1 -name '*.yaml' -print0 2>/dev/null | sort -z)
+
+if [[ ${#yaml_files[@]} -eq 0 ]]; then
+    echo "ERROR: No kubeconfig yaml files found in dev/staging/prod." >&2
+    exit 1
+fi
+
+echo "Found ${#yaml_files[@]} kubeconfig file(s):"
+for f in "${yaml_files[@]}"; do printf "  %s\n" "$f"; done
+
+kubeconfig_chain=$(IFS=:; echo "${yaml_files[*]}")
+
+if $DRY_RUN; then
+    echo ""
+    echo "--- DRY RUN: merged config would be ---"
+    KUBECONFIG="$kubeconfig_chain" kubectl config view --flatten --merge
+    exit 0
+fi
+
+if [[ -f "$CONFIG" ]]; then
+    cp "$CONFIG" "${BACKUP}.${TIMESTAMP}"
+    cp "$CONFIG" "$BACKUP"
+    echo "Backed up to ${BACKUP}.${TIMESTAMP} and ${BACKUP}"
+fi
+
+KUBECONFIG="$kubeconfig_chain" kubectl config view --flatten --merge > "${CONFIG}.new"
+
+if ! KUBECONFIG="${CONFIG}.new" kubectl config get-clusters &>/dev/null; then
+    echo "ERROR: Merged config failed validation. Aborting." >&2
+    rm -f "${CONFIG}.new"
+    exit 1
+fi
+
+mv "${CONFIG}.new" "$CONFIG"
+chmod 600 "$CONFIG"
+
+echo ""
+echo "Merged config written to ${CONFIG}"
+echo ""
+echo "Clusters:"; kubectl config get-clusters | tail -n +2 | sed 's/^/  /'
+echo ""
+echo "Contexts:"; kubectl config get-contexts --no-headers -o name | sed 's/^/  /'
+echo ""
+echo "Run 'kube-ctx-add <cluster> <namespace>' to add a context."

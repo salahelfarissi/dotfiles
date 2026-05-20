@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# kube-ctx-add — create an {env}-{namespace} context in ~/.kube/config
+# Usage: kube-ctx-add [<cluster> <namespace>]
+set -euo pipefail
+
+KUBE_DIR="${HOME}/.kube"
+CONFIG="${KUBE_DIR}/config"
+
+[[ ! -f "$CONFIG" ]] && { echo "ERROR: ${CONFIG} not found. Run 'kube-refresh' first." >&2; exit 1; }
+
+derive_env() {
+    case "$1" in
+        devplatform-kubernetes)              echo "dev"     ;;
+        openhypervision)                     echo "staging" ;;
+        open-hypervision)                    echo "prod"    ;;
+        environment-sl)                      echo "prod"    ;;
+        *devplatform*|*dev-rancher*)         echo "dev"     ;;
+        *staging*)                           echo "staging" ;;
+        *open-hypervision*|*environment-sl*) echo "prod"    ;;
+        *)  echo "$1" ;;
+    esac
+}
+
+get_user_for_cluster() {
+    KUBECONFIG="$CONFIG" kubectl config view \
+        --output jsonpath="{.contexts[?(@.context.cluster==\"${1}\")].context.user}" \
+        2>/dev/null | awk '{print $1}'
+}
+
+if [[ $# -ge 2 ]]; then
+    cluster="$1"
+    namespace="$2"
+else
+    clusters=$(KUBECONFIG="$CONFIG" kubectl config get-clusters --no-headers 2>/dev/null | awk '{print $1}')
+    if [[ -z "$clusters" ]]; then
+        echo "ERROR: No clusters in ${CONFIG}." >&2; exit 1
+    fi
+
+    if command -v fzf &>/dev/null; then
+        cluster=$(echo "$clusters" | fzf \
+            --prompt="Select cluster> " \
+            --header="kube-ctx-add: pick cluster" \
+            --height=40% --layout=reverse) || { echo "Cancelled."; exit 0; }
+    else
+        echo "Available clusters:"
+        mapfile -t cl_array <<< "$clusters"
+        for i in "${!cl_array[@]}"; do printf "  [%d] %s\n" "$((i+1))" "${cl_array[$i]}"; done
+        read -rp "Select cluster number: " idx
+        cluster="${cl_array[$((idx-1))]}"
+    fi
+
+    read -rp "Namespace for cluster '${cluster}': " namespace
+    [[ -z "$namespace" ]] && { echo "No namespace given. Aborted."; exit 0; }
+fi
+
+env_prefix=$(derive_env "$cluster")
+cluster_user=$(get_user_for_cluster "$cluster")
+
+if [[ -z "$cluster_user" ]]; then
+    echo "ERROR: No user found for cluster '${cluster}' in ${CONFIG}." >&2; exit 1
+fi
+
+context_name="${env_prefix}-${namespace}"
+
+KUBECONFIG="$CONFIG" kubectl config set-context "$context_name" \
+    --cluster="$cluster" \
+    --user="$cluster_user" \
+    --namespace="$namespace"
+
+echo "Context '${context_name}' ready  (cluster=${cluster}, namespace=${namespace})"
+echo "Switch with: kubectl config use-context ${context_name}"
