@@ -26,11 +26,15 @@ return {
 
     require('telescope').setup {
       defaults = {
+        preview = {
+          -- Telescope 0.1.x still calls removed nvim-treesitter APIs on Neovim 0.12.
+          treesitter = false,
+        },
         mappings = {
           i = {
             ['<C-k>'] = actions.move_selection_previous, -- move to prev result
-            ['<C-j>'] = actions.move_selection_next,     -- move to next result
-            ['<C-l>'] = actions.select_default,          -- open file
+            ['<C-j>'] = actions.move_selection_next, -- move to next result
+            ['<C-l>'] = actions.select_default, -- open file
           },
           n = {
             ['q'] = actions.close,
@@ -88,6 +92,9 @@ return {
     vim.keymap.set('n', '<leader>gb', builtin.git_branches, { desc = 'Search [G]it [B]ranches' })
     vim.keymap.set('n', '<leader>gs', builtin.git_status, { desc = 'Search [G]it [S]tatus (diff view)' })
     vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
+    vim.keymap.set('n', '<leader>sF', function()
+      builtin.find_files { no_ignore = true, no_ignore_parent = true }
+    end, { desc = '[S]earch [F]iles (include ignored)' })
     vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
     vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
     vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })

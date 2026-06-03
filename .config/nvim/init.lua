@@ -1,3 +1,9 @@
+-- Silence vim.tbl_flatten deprecation on Neovim 0.11+ (used by some plugins)
+if vim.fn.has('nvim-0.11') == 1 then
+  ---@diagnostic disable-next-line: duplicate-set-field
+  vim.tbl_flatten = function(t) return vim.iter(t):flatten(math.huge):totable() end
+end
+
 require 'core.options'  -- Load general options
 require 'core.keymaps'  -- Load general keymaps
 require 'core.snippets' -- Custom code snippets
