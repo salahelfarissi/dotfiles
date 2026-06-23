@@ -82,6 +82,131 @@ alias gchanged='git diff --name-only $(git_main_branch)...'
 alias lg='lazygit'
 alias gmr='glab mr create -a s.el-farissi'
 
+# Alias discovery helpers
+_alias_viewer() {
+  if ! command -v jless >/dev/null 2>&1; then
+    echo "jless is not installed. Install it with: brew install jless" >&2
+    return 1
+  fi
+
+  jless
+}
+
+_alias_topic_classifier_py() {
+  cat <<'PY'
+import re
+
+def classify(command):
+    normalized = command.strip().strip("'").strip('"')
+
+    if normalized.startswith(('docker-compose ', 'docker compose ')) or normalized in ('docker-compose', 'docker compose') or re.search(r'\bdocker(?:-compose| compose)\b', normalized):
+        return 'docker compose'
+    if normalized.startswith('docker ') or normalized == 'docker' or re.search(r'\bdocker\b', normalized):
+        return 'docker'
+    if normalized.startswith(('git ', 'lazygit ')) or normalized in ('git', 'lazygit') or re.search(r'\bgit\b', normalized):
+        return 'git'
+    if normalized.startswith('kubectl ') or normalized == 'kubectl' or re.search(r'\bkubectl\b', normalized):
+        return 'kubectl'
+    if normalized.startswith(('kubectx ', 'kubens ')) or normalized in ('kubectx', 'kubens') or re.search(r'\b(kubectx|kubens)\b', normalized):
+        return 'kubectx'
+    if normalized.startswith(('nvim ', 'vim ', 'vi ')) or normalized in ('nvim', 'vim', 'vi') or re.search(r'\b(nvim|vim|vi)\b', normalized):
+        return 'editor'
+    if normalized.startswith('|') or ' | ' in normalized or normalized.startswith('2>&1') or normalized.startswith('1>') or normalized.startswith('>'):
+        return 'shell'
+
+    return 'other'
+PY
+}
+
+_aliases_json() {
+  if ! command -v python3 >/dev/null 2>&1; then
+    echo "python3 is required to format aliases as JSON." >&2
+    return 1
+  fi
+
+  local pattern="${1:-.*}"
+  local name
+
+  {
+    for name in ${(kon)aliases}; do
+      if [[ "$name" =~ "$pattern" ]]; then
+        print -rn -- "$name"$'\0'"${aliases[$name]}"$'\0'
+      fi
+    done
+  } | python3 -c "$(cat <<PY
+import json
+import sys
+from collections import OrderedDict
+
+$(_alias_topic_classifier_py)
+
+parts = sys.stdin.buffer.read().split(b"\0")
+if parts and parts[-1] == b"":
+    parts.pop()
+
+groups = OrderedDict()
+for i in range(0, len(parts), 2):
+    name = parts[i].decode()
+    command = parts[i + 1].decode()
+    topic = classify(command)
+    groups.setdefault(topic, []).append({
+        'name': name,
+        'command': command,
+    })
+
+print(json.dumps(groups, indent=2))
+PY
+)"
+}
+
+aliases() {
+  _aliases_json | _alias_viewer
+}
+
+git-aliases() {
+  _aliases_json '^g' | _alias_viewer
+}
+
+omz-aliases() {
+  local plugin="${1:-git}"
+  local snippet="${XDG_DATA_HOME:-$HOME/.local/share}/zinit/snippets/OMZP::${plugin}/OMZP::${plugin}"
+
+  if [[ ! -r "$snippet" ]]; then
+    echo "OMZ snippet not found: $snippet" >&2
+    return 1
+  fi
+
+  if ! command -v python3 >/dev/null 2>&1; then
+    echo "python3 is required to format aliases as JSON." >&2
+    return 1
+  fi
+
+  python3 - "$plugin" "$snippet" <<PY | _alias_viewer
+import json
+import re
+import sys
+from collections import OrderedDict
+
+$(_alias_topic_classifier_py)
+
+plugin, snippet = sys.argv[1], sys.argv[2]
+groups = OrderedDict()
+with open(snippet) as source:
+    for line in source:
+        match = re.match(r"^alias\s+([^=]+)=(.*)$", line.strip())
+        if match:
+            command = match.group(2)
+            topic = classify(command)
+            groups.setdefault(topic, []).append({
+                'plugin': plugin,
+                'name': match.group(1),
+                'command': command,
+            })
+
+print(json.dumps(groups, indent=2))
+PY
+}
+
 # psql util
 export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 
