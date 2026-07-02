@@ -5,7 +5,18 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-eval "(/opt/homebrew/bin/brew shellenv)"
+# Platform detection
+if [[ -n "$WSL_DISTRO_NAME" ]]; then
+  _IS_WSL=1
+else
+  _IS_WSL=0
+fi
+[[ "$(uname)" == "Darwin" ]] && _IS_MAC=1 || _IS_MAC=0
+
+# macOS: Homebrew
+if (( _IS_MAC )); then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
 
 # Set the directory we want to store zinit and plugins
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
@@ -37,6 +48,7 @@ zinit snippet OMZP::docker
 zinit snippet OMZP::docker-compose
 zinit snippet OMZP::common-aliases
 zinit snippet OMZP::alias-finder
+zinit snippet OMZP::command-not-found
 
 zstyle ':omz:plugins:alias-finder' autoload yes # disabled by default
 
@@ -207,46 +219,47 @@ print(json.dumps(groups, indent=2))
 PY
 }
 
-# psql util
-export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
-
-# Created by `pipx` on 2024-08-31 14:39:16
-export PATH="$PATH:/Users/salah/.local/bin"
-
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
-# Shell integrations
-source <(fzf --zsh)
-eval "$(zoxide init --cmd cd zsh)"
-. "/Users/salah/.deno/env"
-
-# Minikube completions
-if command -v minikube &>/dev/null; then
-  source <(minikube completion zsh)
-fi
-
-# The following lines have been added by Docker Desktop to enable Docker CLI completions.
-fpath=(/Users/salah/.docker/completions $fpath)
-autoload -Uz compinit
-compinit
-# End of Docker CLI completions
-
-# Enable uv shell completions
-eval "$(uv generate-shell-completion zsh)"
-
-# NVim
+# PATH — shared
+export PATH="$HOME/.local/bin:$PATH"
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 export PATH="/usr/local/nvim/bin:$PATH"
 
-export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
+# macOS-only
+if (( _IS_MAC )); then
+  export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+  export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
 
-# Krew
-export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
-autoload -U +X bashcompinit && bashcompinit
-complete -o nospace -C /opt/homebrew/bin/mc mc
+  . "$HOME/.deno/env"
 
+  # Docker Desktop CLI completions
+  fpath=($HOME/.docker/completions $fpath)
+
+  # uv shell completions
+  eval "$(uv generate-shell-completion zsh)"
+
+  # Minikube completions
+  if command -v minikube &>/dev/null; then
+    source <(minikube completion zsh)
+  fi
+
+  autoload -U +X bashcompinit && bashcompinit
+  complete -o nospace -C /opt/homebrew/bin/mc mc
+fi
+
+# WSL-only
+if (( _IS_WSL )); then
+  export PATH="$PATH:$HOME/bin"
+fi
+
+# fpath completions (must come before final compinit)
 fpath=(~/.zsh/completion $fpath)
 autoload -U compinit
 compinit
+
+# Shell integrations
+source <(fzf --zsh) 2>/dev/null || { [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh; }
+eval "$(zoxide init --cmd cd zsh)"
