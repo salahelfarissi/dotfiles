@@ -93,6 +93,7 @@ alias copy-last='fc -ln -1 | sed "s/^[[:space:]]*//" | pbcopy'
 alias gchanged='git diff --name-only $(git_main_branch)...'
 alias lg='lazygit'
 alias gmr='glab mr create -a s.el-farissi'
+alias yless='jless --yaml'
 
 # Alias discovery helpers
 _alias_viewer() {
