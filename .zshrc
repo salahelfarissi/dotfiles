@@ -253,6 +253,12 @@ fi
 # WSL-only
 if (( _IS_WSL )); then
   export PATH="$PATH:$HOME/bin"
+  export PATH="$PATH:/snap/bin"
+
+  # Kubernetes config management
+  alias kube-refresh='~/.local/bin/kube-refresh'
+  alias kube-ctx-add='~/.local/bin/kube-ctx-add'
+  alias krx='kube-refresh && kube-ctx-add'
 fi
 
 # fpath completions (must come before final compinit)
