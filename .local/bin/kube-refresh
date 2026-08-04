@@ -25,7 +25,26 @@ fi
 echo "Found ${#yaml_files[@]} kubeconfig file(s):"
 for f in "${yaml_files[@]}"; do printf "  %s\n" "$f"; done
 
-kubeconfig_chain=$(IFS=:; echo "${yaml_files[*]}")
+# Dedup generic "rancher" user/cluster/context names by suffixing with the env
+# directory name (dev, staging, prod) so tokens don't collide during merge.
+TMPDIR_DEDUP=$(mktemp -d)
+trap 'rm -rf "$TMPDIR_DEDUP"' EXIT
+
+merge_files=()
+for f in "${yaml_files[@]}"; do
+    env_dir=$(basename "$(dirname "$f")")
+    tmp_file="${TMPDIR_DEDUP}/${env_dir}-$(basename "$f")"
+    yq eval "
+        (.users[]  | select(.name == \"rancher\") | .name)             = \"rancher-${env_dir}\" |
+        (.clusters[] | select(.name == \"rancher\") | .name)           = \"rancher-${env_dir}\" |
+        (.contexts[] | select(.name == \"rancher\") | .name)           = \"rancher-${env_dir}\" |
+        (.contexts[] | select(.context.user == \"rancher\") | .context.user)       = \"rancher-${env_dir}\" |
+        (.contexts[] | select(.context.cluster == \"rancher\") | .context.cluster) = \"rancher-${env_dir}\"
+    " "$f" > "$tmp_file"
+    merge_files+=("$tmp_file")
+done
+
+kubeconfig_chain=$(IFS=:; echo "${merge_files[*]}")
 
 if $DRY_RUN; then
     echo ""

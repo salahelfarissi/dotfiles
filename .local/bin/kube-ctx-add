@@ -14,6 +14,9 @@ derive_env() {
         openhypervision)                     echo "staging" ;;
         open-hypervision)                    echo "prod"    ;;
         environment-sl)                      echo "prod"    ;;
+        rancher-dev)                         echo "dev"     ;;
+        rancher-staging)                     echo "staging" ;;
+        rancher-prod)                        echo "prod"    ;;
         *devplatform*|*dev-rancher*)         echo "dev"     ;;
         *staging*)                           echo "staging" ;;
         *open-hypervision*|*environment-sl*) echo "prod"    ;;
