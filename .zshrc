@@ -18,6 +18,11 @@ if (( _IS_MAC )); then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
+# PATH — shared (must precede plugin load so command guards like fd resolve correctly)
+export PATH="$HOME/.local/bin:$PATH"
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+export PATH="/usr/local/nvim/bin:$PATH"
+
 # Set the directory we want to store zinit and plugins
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 
@@ -219,11 +224,6 @@ with open(snippet) as source:
 print(json.dumps(groups, indent=2))
 PY
 }
-
-# PATH — shared
-export PATH="$HOME/.local/bin:$PATH"
-export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
-export PATH="/usr/local/nvim/bin:$PATH"
 
 # macOS-only
 if (( _IS_MAC )); then
